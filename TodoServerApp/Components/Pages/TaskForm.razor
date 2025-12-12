@@ -1,0 +1,67 @@
+﻿@page "/tasks/add"
+@page "/tasks/{Id:int}"
+
+@inject IDataService data
+@inject NavigationManager navigate
+
+@if (TaskItem != null)
+{
+    <EditForm Model="TaskItem" FormName="TaskForm" OnValidSubmit="ValidSubmit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <h2>Новая задача</h2>
+        <InputNumber @bind-Value="TaskItem.Id" hidden />
+        <div class="from-group d-flex justify-content-between m-2">
+            <lable class="col-form-label col-3">Заголовок</lable>
+            <InputText @bind-Value="TaskItem.Title" class="from-control" />
+            <ValidationMessage For="() => TaskItem.Title" />
+        </div>
+        <div class="from-group d-flex justify-content-between m-2">
+            <lable class="col-form-label col-3">Описание</lable>
+            <InputTextArea @bind-Value="TaskItem.Description" class="from-control" />
+            <ValidationMessage For="() => TaskItem.Description" />
+        </div>
+        <div class="from-group d-flex justify-content-between m-2">
+            <lable class="col-form-label col-3">Дата окончания</lable>
+            <InputDate @bind-Value="TaskItem.FinishDate" class="from-control"/>
+            <ValidationMessage For="() => TaskItem.FinishDate" />
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary m-2" type="submit">Сохранить</button>
+            <a class="btn btn-primary m-2" href="/">Отмена</a>
+        </div>
+    </EditForm>
+
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    TaskItem TaskItem { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (TaskItem == null)
+        {
+            TaskItem = new();
+            if (Id != 0)
+            {
+                var srf = await data.GetTaskAsync(Id);
+                TaskItem.Id = srf.Id;
+                TaskItem.Title = srf.Title;
+                TaskItem.Description = srf.Description;
+                TaskItem.FinishDate = srf.FinishDate;
+            }
+        }
+    }
+
+    async Task ValidSubmit()
+    {
+        await data.SaveAsync(TaskItem!);
+        navigate.NavigateTo("/");
+    }
+}
